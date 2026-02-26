@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+
+const _networkLottieUrl =
+    'https://raw.githubusercontent.com/xvrh/lottie-flutter/master/example/assets/lottiefiles/slack_app_loader.json';
 
 void main() {
   runApp(const MyApp());
@@ -7,115 +11,369 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Lottie Practice',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const LottieLabPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class LottieLabPage extends StatefulWidget {
+  const LottieLabPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LottieLabPage> createState() => _LottieLabPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _LottieLabPageState extends State<LottieLabPage>
+    with TickerProviderStateMixin {
+  late final AnimationController _controller;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  Duration? _baseDuration;
+  double _speed = 1.0;
+  bool _loop = true;
+  bool _reverse = false;
+
+  bool _useDynamicDelegate = true;
+  bool _useRenderCache = false;
+  bool _useMaxFrameRate = false;
+  double _delegateOpacity = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onControlledLottieLoaded(LottieComposition composition) {
+    _baseDuration ??= composition.duration;
+    _applySpeed();
+
+    if (!_controller.isAnimating && _controller.value == 0) {
+      _play();
+    }
+  }
+
+  void _applySpeed() {
+    if (_baseDuration == null) {
+      return;
+    }
+
+    final newDuration = Duration(
+      milliseconds: (_baseDuration!.inMilliseconds / _speed).round().clamp(
+        1,
+        600000,
+      ),
+    );
+
+    _controller.duration = newDuration;
+  }
+
+  void _play() {
+    if (_controller.duration == null) {
+      return;
+    }
+
+    if (_loop) {
+      _controller.repeat(reverse: _reverse);
+      return;
+    }
+
+    if (_reverse) {
+      final from = _controller.value == 0 ? 1.0 : _controller.value;
+      _controller.reverse(from: from);
+    } else {
+      _controller.forward(from: _controller.value);
+    }
+  }
+
+  void _pause() {
+    _controller.stop();
+  }
+
+  void _restart() {
+    if (_controller.duration == null) {
+      return;
+    }
+
+    _controller.reset();
+    _play();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final isControllerReady = _controller.duration != null;
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      appBar: AppBar(title: const Text('Lottie 실습 확장 예제')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _SectionCard(
+            title: '1) Network Lottie',
+            subtitle: '원격 JSON 로드 + 로딩/에러 처리',
+            child: Lottie.network(
+              _networkLottieUrl,
+              width: 180,
+              repeat: true,
+              frameBuilder: (context, child, composition) {
+                if (composition == null) {
+                  return const SizedBox(
+                    width: 180,
+                    height: 180,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return child;
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: Center(child: Text('네트워크 로드 실패')),
+                );
+              },
             ),
+          ),
+          _SectionCard(
+            title: '2) Asset Lottie',
+            subtitle: '프로젝트에 포함된 JSON 에셋 로드',
+            child: Lottie.asset(
+              'assets/lottie/walking.json',
+              width: 220,
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+          ),
+          _SectionCard(
+            title: '3) Controller Lottie',
+            subtitle: '재생/정지/재시작 + 진행도 슬라이더 + 속도 제어',
+            child: Column(
+              children: [
+                Lottie.asset(
+                  'assets/lottie/walking.json',
+                  width: 220,
+                  controller: _controller,
+                  onLoaded: _onControlledLottieLoaded,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    FilledButton(
+                      onPressed: isControllerReady ? _play : null,
+                      child: const Text('Play'),
+                    ),
+                    FilledButton.tonal(
+                      onPressed: isControllerReady ? _pause : null,
+                      child: const Text('Pause'),
+                    ),
+                    OutlinedButton(
+                      onPressed: isControllerReady ? _restart : null,
+                      child: const Text('Restart'),
+                    ),
+                  ],
+                ),
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final progress = _controller.value.clamp(0.0, 1.0);
+                    return Column(
+                      children: [
+                        Slider(
+                          value: progress,
+                          onChanged: isControllerReady
+                              ? (value) {
+                                  _controller.value = value;
+                                }
+                              : null,
+                        ),
+                        Text(
+                          'Progress: ${(progress * 100).toStringAsFixed(0)}%',
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                Row(
+                  children: [
+                    const SizedBox(width: 12),
+                    const Text('Speed'),
+                    Expanded(
+                      child: Slider(
+                        min: 0.25,
+                        max: 2.0,
+                        divisions: 7,
+                        value: _speed,
+                        label: '${_speed.toStringAsFixed(2)}x',
+                        onChanged: (value) {
+                          setState(() {
+                            _speed = value;
+                          });
+                          _applySpeed();
+                        },
+                      ),
+                    ),
+                    Text('${_speed.toStringAsFixed(2)}x'),
+                    const SizedBox(width: 12),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: '4) Lottie 추가 기능',
+            subtitle: 'repeat/reverse + frameRate + renderCache + delegates',
+            child: Column(
+              children: [
+                Lottie.asset(
+                  'assets/lottie/shapes.json',
+                  width: 220,
+                  repeat: _loop,
+                  reverse: _reverse,
+                  frameRate: _useMaxFrameRate
+                      ? FrameRate.max
+                      : FrameRate.composition,
+                  renderCache: _useRenderCache
+                      ? RenderCache.drawingCommands
+                      : null,
+                  delegates: _useDynamicDelegate
+                      ? LottieDelegates(
+                          values: [
+                            ValueDelegate.color(const [
+                              '**',
+                              'Fill 1',
+                            ], value: Colors.red),
+                            ValueDelegate.opacity(const [
+                              '**',
+                              'Fill 1',
+                            ], value: (_delegateOpacity * 100).round()),
+                            ValueDelegate.opacity(const [
+                              '**',
+                              'Stroke 1',
+                            ], value: (_delegateOpacity * 100).round()),
+                          ],
+                        )
+                      : null,
+                ),
+                if (_useDynamicDelegate) ...[
+                  const SizedBox(height: 8),
+                  const Text('Delegate Opacity'),
+                  Slider(
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 10,
+                    label: '${(_delegateOpacity * 100).round()}%',
+                    value: _delegateOpacity,
+                    onChanged: (value) {
+                      setState(() {
+                        _delegateOpacity = value;
+                      });
+                    },
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: const Text('Loop'),
+                      selected: _loop,
+                      onSelected: (value) {
+                        setState(() {
+                          _loop = value;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Reverse'),
+                      selected: _reverse,
+                      onSelected: (value) {
+                        setState(() {
+                          _reverse = value;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('FrameRate.max'),
+                      selected: _useMaxFrameRate,
+                      onSelected: (value) {
+                        setState(() {
+                          _useMaxFrameRate = value;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('RenderCache'),
+                      selected: _useRenderCache,
+                      onSelected: (value) {
+                        setState(() {
+                          _useRenderCache = value;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Dynamic Delegate'),
+                      selected: _useDynamicDelegate,
+                      onSelected: (value) {
+                        setState(() {
+                          _useDynamicDelegate = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 10),
+            Center(child: child),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
